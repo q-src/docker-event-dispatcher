@@ -1,11 +1,13 @@
 package com.github.qsrc;
 
-import com.github.qsrc.event.Subscription;
+import com.github.qsrc.event.Notification;
 import com.github.qsrc.event.processor.*;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.processor.aggregate.UseLatestAggregationStrategy;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
+import static org.apache.camel.builder.PredicateBuilder.and;
 
 @Component
 public class FileRouteBuilder extends RouteBuilder {
@@ -13,6 +15,8 @@ public class FileRouteBuilder extends RouteBuilder {
     public static final String RECIPIENT_DELIMITER_VALUE = "${dispatcher.forward.delimiter:,}";
 
     public static final String RECIPIENT_HEADER = "destination";
+
+    public static final String FILE_URI = "file://camel?recursive=true";
 
     private static class Route {
         private static final String NULL = "null";
@@ -30,11 +34,13 @@ public class FileRouteBuilder extends RouteBuilder {
 
     private EventExtractor eventExtractor;
 
-    private SubscriptionsExtractor subscriptionsExtractor;
+    private NotificationExtractor notificationExtractor;
 
     private EventForwarder eventForwarder;
 
-    private ContainerNotifier containerNotifier;
+    private NotificationProcessor notificationProcessor;
+
+    private NotificationCountEnricher notificationCountEnricher;
 
     @Value(RECIPIENT_DELIMITER_VALUE)
     private String recipientDelimiter;
@@ -42,20 +48,22 @@ public class FileRouteBuilder extends RouteBuilder {
     public FileRouteBuilder(
             EventExtractor eventExtractor,
             EventForwarder eventForwarder,
-            SubscriptionsExtractor subscriptionsExtractor,
-            ContainerNotifier containerNotifier
+            NotificationExtractor notificationExtractor,
+            NotificationProcessor notificationProcessor,
+            NotificationCountEnricher notificationCountEnricher
     ) {
         super();
         this.eventExtractor = eventExtractor;
         this.eventForwarder = eventForwarder;
-        this.subscriptionsExtractor = subscriptionsExtractor;
-        this.containerNotifier = containerNotifier;
+        this.notificationExtractor = notificationExtractor;
+        this.notificationProcessor = notificationProcessor;
+        this.notificationCountEnricher = notificationCountEnricher;
     }
 
     @Override
     public void configure() {
         from("file://camel?recursive=true")
-                .routeId("events:extractor")
+                .routeId(direct("events:extractor"))
                 .tracing()
                 .process(eventExtractor)
                 .multicast()
@@ -70,27 +78,35 @@ public class FileRouteBuilder extends RouteBuilder {
                 .log("[${headers.breadcrumbId}] Detected event '${headers[event.id]}'")
                 .process(eventForwarder)
                 .log("[${headers.breadcrumbId}] Forwarding event '${headers[event.id]}' to '${headers.destination}'")
-                .recipientList(header(RECIPIENT_HEADER), recipientDelimiter);
+                .recipientList(header(RECIPIENT_HEADER), recipientDelimiter)
+                .end();
 
 
         from(direct(Route.SUBSCRIPTION_EXTRACTOR))
                 .routeId(Route.SUBSCRIPTION_EXTRACTOR)
-                .process(subscriptionsExtractor)
-                .split(bodyAs(SubscriptionList.class))
+                .process(notificationExtractor)
+                .split(bodyAs(NotificationList.class))
                 .to(direct(Route.SUBSCRIPTION));
 
         from(direct(Route.SUBSCRIPTION))
                 .routeId(Route.SUBSCRIPTION)
-                .setHeader(Header.SUBSCRIPTION_ID).body(Subscription.class, Subscription::getId)
-                .setHeader(Header.DISPATCH_TIMEOUT).body(Subscription.class, Subscription::getDebounceTime)
-                .choice().when(header(Header.DISPATCH_TIMEOUT).isGreaterThan(0))
-                    .to(direct(Route.DEBOUNCED_NOTIFICATION))
+                .setHeader(Header.SUBSCRIPTION_ID).body(Notification.class, Notification::getId)
+                .setHeader(Header.DISPATCH_TIMEOUT).body(Notification.class, notification -> notification.getSubscription().getDebounceTime())
+                .process(notificationCountEnricher)
+                .choice()
+                .when(
+                        and(
+                                header(Header.DISPATCH_TIMEOUT).isGreaterThan(0),
+                                header(NotificationCountEnricher.COUNT_HEADER).isGreaterThan(1)
+                        )
+                )
+                .to(direct(Route.DEBOUNCED_NOTIFICATION))
                 .otherwise()
-                    .to(direct(Route.NOTIFICATION));
+                .to(direct(Route.NOTIFICATION));
 
         from(direct(Route.NOTIFICATION))
                 .log("[${headers.id}] Start processing...")
-                .process(containerNotifier);
+                .process(notificationProcessor);
 
         from(direct(Route.DEBOUNCED_NOTIFICATION))
                 .routeId(Route.DEBOUNCED_NOTIFICATION)

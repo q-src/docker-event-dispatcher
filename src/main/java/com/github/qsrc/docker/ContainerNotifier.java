@@ -1,13 +1,11 @@
-package com.github.qsrc.event.processor;
+package com.github.qsrc.docker;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.core.command.ExecStartResultCallback;
-import com.github.qsrc.docker.ConfigLabel;
 import com.github.qsrc.event.Event;
+import com.github.qsrc.event.Notification;
 import com.github.qsrc.event.Subscription;
-import org.apache.camel.Exchange;
-import org.apache.camel.Processor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -16,12 +14,11 @@ import java.util.ArrayList;
 import java.util.regex.Pattern;
 
 @Service
-public class ContainerNotifier implements Processor {
+public class ContainerNotifier {
 
     private static Logger LOGGER = LoggerFactory.getLogger(ContainerNotifier.class);
 
-    private final static String LOG_PREFIX = "[{}-{}" +
-            "] ";
+    private final static String LOG_PREFIX = "[{}] ";
 
     private final static String NOT_DISPATCHING_MSG = LOG_PREFIX + "Cannot dispatch event. ";
 
@@ -31,14 +28,8 @@ public class ContainerNotifier implements Processor {
         this.docker = docker;
     }
 
-
-    @Override
-    public void process(Exchange exchange) {
-        notify(exchange.getMessage().getBody(Subscription.class));
-    }
-
-    void notify(Subscription subscription) {
-        var event = subscription.getEvent();
+    public void notify(Notification notification) {
+        var subscription = notification.getSubscription();
         try {
             if (subscription.isStart() && !isRunning(subscription.getContainerId())) {
                 docker.startContainerCmd(subscription.getContainerId())
@@ -47,33 +38,32 @@ public class ContainerNotifier implements Processor {
             if (!isRunning(subscription.getContainerId())) {
                 LOGGER.warn(
                         NOT_DISPATCHING_MSG + "Container is not running. You may want to set the '{}' label to true.",
-                        subscription.getContainerId(),
-                        event.getId(),
+                        notification.getId(),
                         ConfigLabel.CONTAINER_START
                 );
             } else if (subscription.getCommand().isEmpty()) {
                 LOGGER.warn(
                         NOT_DISPATCHING_MSG + "Label '{}' is empty.",
-                        subscription.getContainerId(),
-                        event.getId(),
+                        notification.getId(),
                         ConfigLabel.CONTAINER_COMMAND
                 );
             } else {
-                execInContainer(subscription, event);
+                execInContainer(notification);
             }
 
         } catch (DockerException dockerException) {
             LOGGER.error(
                     LOG_PREFIX, "Event Dispatching failed. Reason: '{}' - '{}'",
-                    subscription.getContainerId(),
-                    event.getId(),
+                    notification.getId(),
                     dockerException.getClass().getSimpleName(),
                     dockerException.getMessage()
             );
         }
     }
 
-    private void execInContainer(Subscription subscription, Event event) {
+    private void execInContainer(Notification notification) {
+        var event = notification.getEvent();
+        var subscription = notification.getSubscription();
         var command = createCommand(subscription);
         var execCmd = docker.execCreateCmd(subscription.getContainerId())
                 .withCmd(command)

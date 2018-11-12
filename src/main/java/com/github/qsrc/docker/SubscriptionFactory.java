@@ -20,7 +20,6 @@ public class SubscriptionFactory {
                 .command(labelProvider.get(container, event, ConfigLabel.CONTAINER_COMMAND))
                 .debounceTime(labelProvider.getInt(container, event, ConfigLabel.DISPATCH_DEBOUNCE))
                 .start(labelProvider.getBool(container, event, ConfigLabel.CONTAINER_START))
-                .event(event)
                 .build();
     }
 

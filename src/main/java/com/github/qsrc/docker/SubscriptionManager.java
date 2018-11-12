@@ -1,18 +1,16 @@
-package com.github.qsrc.event.processor;
+package com.github.qsrc.docker;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Container;
-import com.github.qsrc.docker.LabelProvider;
-import com.github.qsrc.docker.SubscriptionFactory;
 import com.github.qsrc.event.Event;
-import org.apache.camel.Exchange;
-import org.apache.camel.Processor;
+import com.github.qsrc.event.Subscription;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class SubscriptionsExtractor implements Processor {
+public class SubscriptionManager {
 
     private DockerClient docker;
 
@@ -20,7 +18,7 @@ public class SubscriptionsExtractor implements Processor {
 
     private SubscriptionFactory subscriptionFactory;
 
-    public SubscriptionsExtractor(
+    public SubscriptionManager(
             DockerClient docker,
             LabelProvider labelProvider,
             SubscriptionFactory subscriptionFactory
@@ -30,29 +28,18 @@ public class SubscriptionsExtractor implements Processor {
         this.subscriptionFactory = subscriptionFactory;
     }
 
-
-    @Override
-    public void process(Exchange exchange) throws Exception {
-        var message = exchange.getMessage();
-        message.setBody(
-                extractNotifications(message.getBody(Event.class)),
-                SubscriptionList.class
-        );
-    }
-
-    public SubscriptionList extractNotifications(Event event) {
+    public List<Subscription> findSubscriptions(Event event) {
         return docker.listContainersCmd()
                 .withShowAll(true)
                 .exec()
                 .stream()
                 .filter(container -> isSubscribed(container, event))
                 .map(container -> subscriptionFactory.create(container, event))
-                .collect(Collectors.toCollection(SubscriptionList::new));
+                .collect(Collectors.toList());
     }
 
     private boolean isSubscribed(Container container, Event event) {
         return labelProvider.hasAny(container, event);
     }
-
 
 }
