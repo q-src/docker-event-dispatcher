@@ -1,26 +1,27 @@
 package com.github.qsrc.eventdispatcher.subscription;
 
 import com.github.dockerjava.api.model.Container;
-import com.github.qsrc.eventdispatcher.docker.ConfigLabel;
-import com.github.qsrc.eventdispatcher.docker.LabelProvider;
+import com.github.qsrc.eventdispatcher.docker.Config;
+import com.github.qsrc.eventdispatcher.docker.ConfigProvider;
 import com.github.qsrc.eventdispatcher.event.Event;
 import org.springframework.stereotype.Component;
 
 @Component
 public class SubscriptionFactory {
 
-    private LabelProvider labelProvider;
+    private ConfigProvider configProvider;
 
-    public SubscriptionFactory(LabelProvider labelProvider) {
-        this.labelProvider = labelProvider;
+    public SubscriptionFactory(ConfigProvider configProvider) {
+        this.configProvider = configProvider;
     }
 
     public Subscription create(Container container, Event event) {
+        var namespace = event.getId();
         return Subscription.builder()
                 .containerId(container.getId())
-                .command(labelProvider.get(container, event, ConfigLabel.CONTAINER_COMMAND))
-                .debounceTime(labelProvider.getInt(container, event, ConfigLabel.DISPATCH_DEBOUNCE))
-                .start(labelProvider.getBool(container, event, ConfigLabel.CONTAINER_START))
+                .command(configProvider.get(container, Config.Container.COMMAND.in(namespace)))
+                .start(configProvider.getBool(container, Config.Container.START.in(namespace)))
+                .debounceTime(configProvider.getInt(container, Config.Dispatching.DEBOUNCE.in(namespace)))
                 .build();
     }
 

@@ -2,7 +2,7 @@ package com.github.qsrc.eventdispatcher.subscription;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Container;
-import com.github.qsrc.eventdispatcher.docker.LabelProvider;
+import com.github.qsrc.eventdispatcher.docker.ConfigProvider;
 import com.github.qsrc.eventdispatcher.event.Event;
 import org.springframework.stereotype.Service;
 
@@ -14,17 +14,17 @@ public class SubscriptionManager {
 
     private DockerClient docker;
 
-    private LabelProvider labelProvider;
+    private ConfigProvider configProvider;
 
     private SubscriptionFactory subscriptionFactory;
 
     public SubscriptionManager(
             DockerClient docker,
-            LabelProvider labelProvider,
+            ConfigProvider configProvider,
             SubscriptionFactory subscriptionFactory
     ) {
         this.docker = docker;
-        this.labelProvider = labelProvider;
+        this.configProvider = configProvider;
         this.subscriptionFactory = subscriptionFactory;
     }
 
@@ -39,7 +39,7 @@ public class SubscriptionManager {
     }
 
     private boolean isSubscribed(Container container, Event event) {
-        return labelProvider.hasAny(container, event);
+        return configProvider.hasAny(container, event.getId());
     }
 
 }

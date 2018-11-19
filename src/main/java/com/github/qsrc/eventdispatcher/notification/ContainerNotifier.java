@@ -3,7 +3,7 @@ package com.github.qsrc.eventdispatcher.notification;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.core.command.ExecStartResultCallback;
-import com.github.qsrc.eventdispatcher.docker.ConfigLabel;
+import com.github.qsrc.eventdispatcher.docker.Config;
 import com.github.qsrc.eventdispatcher.subscription.Subscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,13 +38,13 @@ public class ContainerNotifier {
                 LOGGER.warn(
                         NOT_DISPATCHING_MSG + "Container is not running. You may want to set the '{}' label to true.",
                         notification.getId(),
-                        ConfigLabel.CONTAINER_START
+                        Config.Container.START
                 );
             } else if (subscription.getCommand().isEmpty()) {
                 LOGGER.warn(
-                        NOT_DISPATCHING_MSG + "Label '{}' is empty.",
+                        NOT_DISPATCHING_MSG + "Config '{}' is empty.",
                         notification.getId(),
-                        ConfigLabel.CONTAINER_COMMAND
+                        Config.Container.COMMAND
                 );
             } else {
                 execInContainer(notification);
