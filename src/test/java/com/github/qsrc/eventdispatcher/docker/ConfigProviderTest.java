@@ -48,10 +48,10 @@ public class ConfigProviderTest {
 
     @Test
     public void testSupportsStringValues() {
-        Config config = Config.of("some-config");
+        Config config = Config.of("some-label");
         assertEquals("some-value", configProvider.get(subscribedContainer, config.in("event")));
 
-        config = Config.of("missing-config", "default-value").in("event");
+        config = Config.of("missing-label", "default-value").in("event");
         assertEquals("default-value", configProvider.get(subscribedContainer, config));
     }
 
