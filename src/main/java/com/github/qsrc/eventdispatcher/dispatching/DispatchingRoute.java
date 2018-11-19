@@ -16,7 +16,7 @@ public class DispatchingRoute extends RouteBuilder {
 
     public static final String RECIPIENT_HEADER = "destination";
 
-    public static final String FILE_URI = "file://camel?recursive=true";
+    public static final String FILE_URI = "file://events?recursive=true";
 
     private static class Route {
         private static final String NULL = "null";
@@ -62,7 +62,7 @@ public class DispatchingRoute extends RouteBuilder {
 
     @Override
     public void configure() {
-        from("file://camel?recursive=true")
+        from(FILE_URI)
                 .routeId(direct("events:extractor"))
                 .tracing()
                 .process(eventExtractor)
