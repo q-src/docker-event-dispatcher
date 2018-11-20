@@ -16,8 +16,8 @@ public class Notification {
     public String getId() {
         return String.format(
                 "%s-%s",
-                subscription == null ? "null" : subscription.getContainerId(),
-                event == null ? "null" : event.getId()
+                event == null ? "null" : event.getId(),
+                subscription == null ? "null" : subscription.getContainerId()
         );
     }
 }

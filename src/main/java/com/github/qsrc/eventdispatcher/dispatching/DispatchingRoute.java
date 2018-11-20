@@ -1,5 +1,7 @@
 package com.github.qsrc.eventdispatcher.dispatching;
 
+import com.github.qsrc.eventdispatcher.docker.Config;
+import com.github.qsrc.eventdispatcher.event.Event;
 import com.github.qsrc.eventdispatcher.notification.Notification;
 import com.github.qsrc.eventdispatcher.dispatching.processor.*;
 import org.apache.camel.builder.RouteBuilder;
@@ -16,20 +18,23 @@ public class DispatchingRoute extends RouteBuilder {
 
     public static final String RECIPIENT_HEADER = "destination";
 
-    public static final String FILE_URI = "file://events?recursive=true";
+    private static final String FILE_URI = "file://events?recursive=true";
 
-    private static class Route {
-        private static final String NULL = "null";
-        private static final String EVENT = "event";
-        private static final String SUBSCRIPTION_EXTRACTOR = "subscriptions";
-        private static final String SUBSCRIPTION = "subscription";
-        private static final String DEBOUNCED_NOTIFICATION = "notifications:debounced";
-        private static final String NOTIFICATION = "notifications";
+    private static final String LOG_PREFIX = "[${headers.id}] ";
+
+    static class Route {
+        static final String NULL = "null";
+        static final String EVENT_EXTRACTOR = "file";
+        static final String EVENT = "event";
+        static final String SUBSCRIPTION_EXTRACTOR = "subscriptions";
+        static final String SUBSCRIPTION = "subscription";
+        static final String NOTIFICATION = "notification";
+        static final String NOTIFICATIONS_DEBOUNCED = "notifications:debounced";
     }
 
-    private static class Header {
-        private static final String SUBSCRIPTION_ID = "id";
-        private static final String DISPATCH_TIMEOUT = "timeout";
+    static class Header {
+        static final String MESSAGE_ID = "id";
+        static final String DISPATCH_TIMEOUT = "timeout";
     }
 
     private EventExtractor eventExtractor;
@@ -63,21 +68,22 @@ public class DispatchingRoute extends RouteBuilder {
     @Override
     public void configure() {
         from(FILE_URI)
-                .routeId(direct("events:extractor"))
+                .routeId(Route.EVENT_EXTRACTOR)
                 .tracing()
                 .process(eventExtractor)
+                .setHeader(Header.MESSAGE_ID).body(Event.class, Event::getId)
                 .multicast()
                 .to(direct(Route.EVENT), direct(Route.SUBSCRIPTION_EXTRACTOR));
 
         from(direct(Route.NULL))
                 .routeId(Route.NULL)
-                .log("[${headers.breadcrumbId}] Skipping event forwarding of '${headers[event.id]}'");
+                .log(message("Skipping event forwarding."));
 
         from(direct(Route.EVENT))
                 .routeId(Route.EVENT)
-                .log("[${headers.breadcrumbId}] Detected event '${headers[event.id]}'")
+                .log(message("Event detected."))
                 .process(eventForwarder)
-                .log("[${headers.breadcrumbId}] Forwarding event '${headers[event.id]}' to '${headers.destination}'")
+                .log(message("Forwarding event to '${headers.destination}'."))
                 .recipientList(header(RECIPIENT_HEADER), recipientDelimiter)
                 .end();
 
@@ -85,12 +91,13 @@ public class DispatchingRoute extends RouteBuilder {
         from(direct(Route.SUBSCRIPTION_EXTRACTOR))
                 .routeId(Route.SUBSCRIPTION_EXTRACTOR)
                 .process(notificationExtractor)
+                .log(message("Number of subscribed containers found: '${body.size()}'"))
                 .split(bodyAs(NotificationList.class))
                 .to(direct(Route.SUBSCRIPTION));
 
         from(direct(Route.SUBSCRIPTION))
                 .routeId(Route.SUBSCRIPTION)
-                .setHeader(Header.SUBSCRIPTION_ID).body(Notification.class, Notification::getId)
+                .setHeader(Header.MESSAGE_ID).body(Notification.class, Notification::getId)
                 .setHeader(Header.DISPATCH_TIMEOUT).body(Notification.class, notification -> notification.getSubscription().getDebounceTime())
                 .process(notificationCountEnricher)
                 .choice()
@@ -100,18 +107,19 @@ public class DispatchingRoute extends RouteBuilder {
                                 header(NotificationCountEnricher.COUNT_HEADER).isGreaterThan(1)
                         )
                 )
-                .to(direct(Route.DEBOUNCED_NOTIFICATION))
+                .to(direct(Route.NOTIFICATIONS_DEBOUNCED))
                 .otherwise()
                 .to(direct(Route.NOTIFICATION));
 
         from(direct(Route.NOTIFICATION))
-                .log("[${headers.id}] Start processing...")
+                .routeId(Route.NOTIFICATION)
+                .log(message("Start processing..."))
                 .process(notificationProcessor);
 
-        from(direct(Route.DEBOUNCED_NOTIFICATION))
-                .routeId(Route.DEBOUNCED_NOTIFICATION)
-                .log("[${headers.id}] Aggregating with 'dispatch.debounce'='${headers.timeout}ms'.")
-                .aggregate(header(Header.SUBSCRIPTION_ID))
+        from(direct(Route.NOTIFICATIONS_DEBOUNCED))
+                .routeId(Route.NOTIFICATIONS_DEBOUNCED)
+                .log(message("Aggregating for ${headers.timeout}ms (see also %s).", Config.Dispatching.DEBOUNCE.key()))
+                .aggregate(header(Header.MESSAGE_ID))
                 .strategy(new UseLatestAggregationStrategy())
                 .completionTimeout(header(Header.DISPATCH_TIMEOUT))
                 .to(direct(Route.NOTIFICATION));
@@ -119,5 +127,9 @@ public class DispatchingRoute extends RouteBuilder {
 
     private static String direct(String routeId) {
         return String.format("direct:%s", routeId);
+    }
+
+    private static String message(String message, Object... params) {
+        return LOG_PREFIX + String.format(message, params);
     }
 }

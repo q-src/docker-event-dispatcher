@@ -18,7 +18,7 @@ public class SubscriptionFactory {
     public Subscription create(Container container, Event event) {
         var namespace = event.getId();
         return Subscription.builder()
-                .containerId(container.getId())
+                .containerId(String.format("%12.12s", container.getId()))
                 .command(configProvider.get(container, Config.Container.COMMAND.in(namespace)))
                 .start(configProvider.getBool(container, Config.Container.START.in(namespace)))
                 .debounceTime(configProvider.getInt(container, Config.Dispatching.DEBOUNCE.in(namespace)))

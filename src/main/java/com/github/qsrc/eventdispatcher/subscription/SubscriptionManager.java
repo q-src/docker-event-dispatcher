@@ -29,6 +29,9 @@ public class SubscriptionManager {
     }
 
     public List<Subscription> findSubscriptions(Event event) {
+        if (event == null) {
+            throw new IllegalArgumentException("event must not be null.");
+        }
         return docker.listContainersCmd()
                 .withShowAll(true)
                 .exec()

@@ -38,13 +38,13 @@ public class ContainerNotifier {
                 LOGGER.warn(
                         NOT_DISPATCHING_MSG + "Container is not running. You may want to set the '{}' label to true.",
                         notification.getId(),
-                        Config.Container.START
+                        Config.Container.START.key()
                 );
             } else if (subscription.getCommand().isEmpty()) {
                 LOGGER.warn(
                         NOT_DISPATCHING_MSG + "Config '{}' is empty.",
                         notification.getId(),
-                        Config.Container.COMMAND
+                        Config.Container.COMMAND.key()
                 );
             } else {
                 execInContainer(notification);
@@ -52,7 +52,7 @@ public class ContainerNotifier {
 
         } catch (DockerException dockerException) {
             LOGGER.error(
-                    LOG_PREFIX, "Event Dispatching failed. Reason: '{}' - '{}'",
+                    LOG_PREFIX + "Event Dispatching failed. Reason: '{}' - '{}'",
                     notification.getId(),
                     dockerException.getClass().getSimpleName(),
                     dockerException.getMessage()
@@ -61,7 +61,6 @@ public class ContainerNotifier {
     }
 
     private void execInContainer(Notification notification) {
-        var event = notification.getEvent();
         var subscription = notification.getSubscription();
         var command = createCommand(subscription);
         var execCmd = docker.execCreateCmd(subscription.getContainerId())
@@ -74,8 +73,7 @@ public class ContainerNotifier {
                 .exec(new ExecStartResultCallback(System.out, System.err));
         LOGGER.info(
                 LOG_PREFIX + "Event dispatched (Command: [{}]).",
-                subscription.getContainerId(),
-                event.getId(),
+                notification.getId(),
                 String.format("\"%s\"", String.join("\", \"", command))
         );
     }

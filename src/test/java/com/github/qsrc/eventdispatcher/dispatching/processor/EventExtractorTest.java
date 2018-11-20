@@ -53,6 +53,5 @@ public class EventExtractorTest {
     public void testProcessMessage() {
         eventExtractor.process(exchange);
         verify(eventFactory, times(1)).create("namespace/event", "content");
-        verify(message, times(1)).setHeader(EventExtractor.EVENT_ID_HEADER, "id");
     }
 }

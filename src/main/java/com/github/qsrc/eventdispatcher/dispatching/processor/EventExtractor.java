@@ -14,8 +14,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class EventExtractor implements Processor {
 
-    static final String EVENT_ID_HEADER = "event.id";
-
     private static final Logger LOGGER = LoggerFactory.getLogger(EventExtractor.class);
 
     private EventFactory eventFactory;
@@ -32,7 +30,6 @@ public class EventExtractor implements Processor {
                     message.getMandatoryBody(GenericFile.class).getFileName(),
                     message.getMandatoryBody(String.class)
             );
-            message.setHeader(EVENT_ID_HEADER, event.getId());
             exchange.getMessage().setBody(event, Event.class);
         } catch (InvalidPayloadException e) {
             LOGGER.error("Unable to extract event from message '{}'.", message);

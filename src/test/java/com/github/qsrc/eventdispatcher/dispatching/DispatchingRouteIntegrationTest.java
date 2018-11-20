@@ -10,6 +10,7 @@ import org.apache.camel.Exchange;
 import org.apache.camel.Produce;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.builder.AdviceWithRouteBuilder;
+import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.component.file.GenericFile;
 import org.apache.camel.component.file.GenericFileMessage;
 import org.apache.camel.impl.DefaultExchange;
@@ -63,7 +64,8 @@ public class DispatchingRouteIntegrationTest {
 
     @Before
     public void setupTestRoute() throws Exception {
-        camelContext.getRouteDefinition("direct:events:extractor").adviceWith(camelContext, new AdviceWithRouteBuilder() {
+        camelContext.getRouteDefinition(DispatchingRoute.Route.EVENT_EXTRACTOR)
+                .adviceWith(camelContext, new AdviceWithRouteBuilder() {
             @Override
             public void configure() {
                 replaceFromWith(TEST_FILE_ROUTE);
