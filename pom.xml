@@ -7,6 +7,12 @@
     <artifactId>docker-event-dispatcher</artifactId>
     <version>0.1.0</version>
 
+    <properties>
+        <spring-boot.version>2.0.5.RELEASE</spring-boot.version>
+        <camel.version>2.22.1</camel.version>
+        <java.version>10</java.version>
+    </properties>
+
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
@@ -19,7 +25,7 @@
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
-                <version>2.0.5.RELEASE</version>
+                <version>${spring-boot.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -27,7 +33,7 @@
             <dependency>
                 <groupId>org.apache.camel</groupId>
                 <artifactId>camel-spring-boot-dependencies</artifactId>
-                <version>2.22.1</version>
+                <version>${camel.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -37,10 +43,6 @@
 
 
     <dependencies>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
         <dependency>
             <groupId>com.github.docker-java</groupId>
             <artifactId>docker-java</artifactId>
@@ -79,7 +81,7 @@
         <dependency>
             <groupId>org.apache.camel</groupId>
             <artifactId>camel-spring-boot-starter</artifactId>
-            <version>2.22.1</version>
+            <version>${camel.version}</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
@@ -101,22 +103,16 @@
         <dependency>
             <groupId>org.apache.camel</groupId>
             <artifactId>camel-test</artifactId>
-            <version>2.22.1</version>
+            <version>${camel.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.camel</groupId>
             <artifactId>camel-test-spring</artifactId>
-            <version>2.22.1</version>
+            <version>${camel.version}</version>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
-
-    <properties>
-        <java.version>1.8</java.version>
-    </properties>
-
 
     <build>
         <finalName>${project.artifactId}</finalName> <!-- Otherwise Docker COPY would not work -->
