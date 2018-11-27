@@ -78,7 +78,7 @@ with a maximum delay of 1000ms. If an event with id `${eventId}` occurs 800ms af
 dispatched to the container 200ms later if no other event with this id occurs. All occurrences in-between are ignored. 
 So only the last event during 1000ms since the last notification is dispatched. 
 
-The first event with id `${eventId}` since the dispatcher was started is always dispatched immediately.
+The first event with id `${eventId}` since the event-dispatcher was started is always dispatched immediately.
 
 
 ### Event Dispatcher Configuration
@@ -88,12 +88,14 @@ The event-dispatcher can be configured using the following environment variables
 Specifies the label namespace. Every container label set on event handling containers needs to be prefixed with the 
 value of this setting. See also [Event Handler Configuration](#Event-Handler-Configuration).
 
-#### `DISPATCHER_FORWARD_DESTINATION` | Default: `direct:null` (no forwarding)
+#### <a name="DISPATCHER_FORWARD_DESTINATION"></a> `DISPATCHER_FORWARD_DESTINATION` | Default: `direct:null` (no forwarding)
 Every event detected by the event-dispatcher can be forwarded to any endpoint supported by Apache Camel.
-Multiple destinations are supported and must be separated by the delimiter character (see `DISPATCHER_FORWARD_DELIMITER`).
+Multiple destinations are supported and must be separated by the delimiter character (see
+[DISPATCHER_FORWARD_DELIMITER](#DISPATCHER_FORWARD_DELIMITER)).
 
-#### `DISPATCHER_FORWARD_DELIMITER` | Default: `,`
-Specifies the delimiter character which separates multiple forwarding destinations specified in `DISPATCHER_FORWARD_DESTINATION`.
+#### <a name="DISPATCHER_FORWARD_DELIMITER"></a> `DISPATCHER_FORWARD_DELIMITER` | Default: `,`
+Specifies the delimiter character which separates multiple forwarding destinations specified in
+[DISPATCHER_FORWARD_DESTINATION](#DISPATCHER_FORWARD_DESTINATION).
 
 ## Contribute
 In order to contribute a patch, the workflow is as follows:
@@ -109,7 +111,7 @@ is fixed.
 In general commits should be atomic and diffs should be easy to read. For this reason do not mix any formatting fixes or
 code moves with actual code changes.
 
-Commit messages should be verbose by default. TheyC should be helpful to people reading your code in the future, so
+Commit messages should be verbose by default. They should be helpful to people reading your code in the future, so
 explain the reasoning for your decisions. Further explanation [here](http://chris.beams.io/posts/git-commit/).
 
 ## License
