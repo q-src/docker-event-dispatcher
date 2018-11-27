@@ -52,7 +52,7 @@ docker run -ti --name  event-handler -l subscription.demo.some-event.container.c
 
 ```
 
-The following section describes all supported labels for a more specific configuration (each label must be prefixed with
+The following section describes all supported config labels (each label must be prefixed with
 the corresponding label namespace `${namespace}`, see also 
 [DISPATCHER_LABEL_NAMESPACE](#DISPATCHER_LABEL_NAMESPACE)).
 
@@ -60,6 +60,8 @@ the corresponding label namespace `${namespace}`, see also
 
 Specifies the command which shall be executed inside the event handler container when the event with id `${eventId}`
 occurs. 
+
+Space characters can me masked using `\ `.
 
 #### `${namesapce}.${eventId}.container.start` | Default: `false`
 If set to `true`, the event handler container gets started if it is not running and an event with id `${eventId}`
