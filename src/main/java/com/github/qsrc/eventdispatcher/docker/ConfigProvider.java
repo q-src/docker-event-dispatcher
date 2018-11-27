@@ -12,7 +12,7 @@ public class ConfigProvider {
 
     private static List<String> TRUE_VALUES = Arrays.asList("true", "1");
 
-    @Value("${event.dispatcher.label.namespace:subscription}")
+    @Value("${dispatcher.label.namespace:subscription}")
     private String namespace;
 
     public ConfigProvider() {}

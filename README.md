@@ -44,7 +44,7 @@ event handling containers can not be notified.
 
 ### Event Handler Configuration
 Event handling containers can be subscribed to events by specifying `subscription.*` labels (the namespace can be 
-[changed](#EVENT_DISPATCHER_LABEL_NAMESPACE)).
+[changed](#DISPATCHER_LABEL_NAMESPACE)).
 
 In the following example, `docker exec event-handler touch handled` is called when the event `demo.some-event` occurs:
 ```bash
@@ -54,7 +54,7 @@ docker run -ti --name  event-handler -l subscription.demo.some-event.container.c
 
 The following section describes all supported labels for a more specific configuration (each label must be prefixed with
 the corresponding label namespace `${namespace}`, see also 
-[EVENT_DISPATCHER_LABEL_NAMESPACE](#EVENT_DISPATCHER_LABEL_NAMESPACE)).
+[DISPATCHER_LABEL_NAMESPACE](#DISPATCHER_LABEL_NAMESPACE)).
 
 #### `${namesapce}.${eventId}.container.command` | Default: ` `
 
@@ -82,7 +82,7 @@ The first event with id `${eventId}` since the dispatcher was started is always 
 ### Event Dispatcher Configuration
 The event-dispatcher can be configured using the following environment variables:
 
-#### `EVENT_DISPATCHER_LABEL_NAMESPACE` | Default: `subscription`
+#### `DISPATCHER_LABEL_NAMESPACE` | Default: `subscription`
 Specifies the label namespace. Every container label set on event handling containers needs to be prefixed with the 
 value of this setting. See also [Event Handler Configuration](#Event-Handler-Configuration).
 
