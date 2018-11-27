@@ -82,7 +82,7 @@ The first event with id `${eventId}` since the dispatcher was started is always 
 ### Event Dispatcher Configuration
 The event-dispatcher can be configured using the following environment variables:
 
-#### `DISPATCHER_LABEL_NAMESPACE` | Default: `subscription`
+#### <a name="DISPATCHER_LABEL_NAMESPACE"></a> `DISPATCHER_LABEL_NAMESPACE` | Default: `subscription`
 Specifies the label namespace. Every container label set on event handling containers needs to be prefixed with the 
 value of this setting. See also [Event Handler Configuration](#Event-Handler-Configuration).
 
