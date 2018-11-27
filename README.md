@@ -14,7 +14,7 @@ actions in other containers by simply creating files.
 The event emitting container ("emitter") and the event dispatcher container ("event-dispatcher") need to share a volume.
 When the emitter creates a file inside this volume, the dispatcher gets triggered. It creates an event with an id 
 corresponding to the path of the created file and notifies all subscribed containers ("event handlers"). 
-For example, if a file `$event_volume/some-dir/some-sub-dir/the-event-file` is created, all event handlers subscribed to
+For example, if a file `${eventVolume}/some-dir/some-sub-dir/the-event-file` is created, all event handlers subscribed to
  event `some-dir.some-sub-dir.the-event-file` get notified.
 
 The event-dispatcher removes every event file after successful dispatching.
